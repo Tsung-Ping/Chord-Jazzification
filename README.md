@@ -14,7 +14,7 @@ A dataset for chord coloring and voicing.
    To listen to the chord progressions of the dataset, run the following code: <br />
 	 ```generate_midi_instance(corpus['1'], 'example.mid', qpm=120, play_midi=True, show_pianoroll=False)```
 
-   You can listen to other pieces of the dataset by change the key in corpus[key]; valid keys = {'1'-'50'}
+   You can listen to other pieces of the dataset by change the key in `corpus`; valid keys = {'1'-'50'}
 
 3. Run `Chord_Jazzification.py` either to train the models or to inference chord sequences using the pre-trained models
 
