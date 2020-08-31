@@ -8,7 +8,7 @@ A dataset featuring the interpretations of the chord symbols in terms of colorin
 
 
 ## Descriptions
-* `Chord_Jazzification_Dataset`: the annotations
+* `Chord_Jazzification_Dataset`: the annotations of 50 pop-jazz piano solos
 * `chord_jazzification_preprocessing.py`: preprocess the chord jazzification dataset and get the preprocessed data `chord_jazzification_training_data.pickle`
    
    To listen to the chord progressions of the dataset, uncomment the following code: <br />
