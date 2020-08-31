@@ -98,8 +98,8 @@ a6 = agumented 6th (+4: It+6, Fr+6, Gr+6)<br />
 None<br />
 
 ## Inversion
-0 = original<br />
-1 = 1st<br />
-2 = 2st<br />
-3 = 3st (for 7th chord only)<br />
+0 = root position<br />
+1 = 1st inversion<br />
+2 = 2nd inversion<br />
+3 = 3rd inversion (for 7th chord only)<br />
 None<br />
