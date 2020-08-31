@@ -1,5 +1,5 @@
 # Chord-Jazzification
-A symbolic dataset featuring the interpretations of chord symbols in terms of coloring and voicing.
+A dataset featuring the interpretations of the chord symbols in terms of coloring and voicing.
 
 ## Requirements
    tensorflow-gpu 1.8.0 <br />
@@ -20,3 +20,5 @@ A symbolic dataset featuring the interpretations of chord symbols in terms of co
 
    The pre-trained models are saved in the directories: `coloring_model`, `voicing_model` <br />
    The jazzifications of the JAAH dataset are saved in the directory: `JAAH_inference`
+
+4. The implementations of the models are in `chord_jazzification_models.py`
