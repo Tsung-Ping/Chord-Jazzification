@@ -1,5 +1,5 @@
 ## Onset
-The onset(measured in beats) of each chord.
+The onset (measured in beats) of each chord.
 
 ## Chord Symbol
 (R = root, C = Color, B = Bass)<br />
@@ -44,7 +44,7 @@ R(#/b):M or R(#/b):m<br />
 e.g., C:M = C major, c#:m = C# minor<br />
 
 ## Roman Numeral
-Roman Numeral denotes the scale degree on which a chord is built, as well as the quality and the inversion information, e.g., V7stands for a dominant seventh chord in root position.
+Roman Numeral denotes the scale degree on which a chord is built, as well as the quality and the inversion information, e.g., V7stands for a dominant seventh chord in root position.<br />
 <br />
 Vocabulary:<br />
 upper case Roman numeral = mojor triad<br />
@@ -71,9 +71,9 @@ Fr+6 = French sixth<br />
 Gr+6 = German sixth<br />
 <br />
 for compound chord<br />
-[ = begin<br />
-* = inside<br />
-] = end<br />
+\[ = begin<br />
+\* = inside<br />
+\] = end<br />
 
 ## Scale Degree
 For normal chords, the 1st (primary) degree = 1; for altered chords (represented as 2nd degree/1st degree), the 1st (primary) degree != 1<br />
