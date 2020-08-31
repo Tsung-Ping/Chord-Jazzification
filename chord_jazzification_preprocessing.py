@@ -27,7 +27,7 @@ def note_name_to_number(note_name):
     accidental = note_name[1] if note_name != note_name_without_accidental else ''
 
     try:
-        note_number = pretty_midi.note_name_to_number(note_name_without_accidental) + modify_number_by_accidental(accidental)
+        note_number = pm.note_name_to_number(note_name_without_accidental) + modify_number_by_accidental(accidental)
     except:
         print('Error: invalid note name', note_name)
         exit(1)
@@ -411,7 +411,7 @@ def main():
     show_statistics(corpus, plot_figure=False)
 
     # # Generate midi
-    # generate_midi_instance(corpus['1], 'example.mid', qpm=120, play_midi=True, show_pianoroll=False)
+    # generate_midi_instance(corpus['1'], 'example.mid', qpm=120, play_midi=True, show_pianoroll=False)
 
     # Group labels belonging to the same phrase
     corpus_phrasing = phrasing(corpus) # {'op': {'phrase':[label...]}, ... }

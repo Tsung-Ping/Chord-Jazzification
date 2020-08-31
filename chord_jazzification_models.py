@@ -7,6 +7,7 @@ import time
 import random
 import pickle
 import pretty_midi as pm
+import os
 
 triad_id_to_chroma = [[0 if i not in [0,4,7] else 1 for i in range(12)], [0 if i not in [0,3,7] else 1 for i in range(12)],
                       [0 if i not in [0,4,8] else 1 for i in range(12)], [0 if i not in [0,3,6] else 1 for i in range(12)],
@@ -538,7 +539,7 @@ def train_coloring_model(data_dir, hp):
         print('train the coloring model...')
         with tf.Session(graph=g_coloring) as sess:
             sess.run(tf.global_variables_initializer())
-            startTime = time.time()  # start time of training
+            startTime = time.time() # start time of training
             best_scores = [0.0, 0.0]
             in_succession = 0
             best_epoch = 0
@@ -1114,7 +1115,7 @@ def cross_validate_voicing_model(data_dir, hp):
     tf.summary.scalar('Recall_voicing', R_v)
     tf.summary.scalar('SSM_score', SSM_score)
 
-    graph_location = 'model//'
+    graph_location = 'model\\'
     train_writer = tf.summary.FileWriter(graph_location + '\\train')
     valid_writer = tf.summary.FileWriter(graph_location + '\\valid')
     print('Saving graph to: %s' % graph_location)
@@ -1376,21 +1377,95 @@ def cross_validate_end2end_chord_jazzification(data_dir, hp):
         print('best epoch = ', best_epoch)
         print('best valid score =', np.round(best_valid_score,4))
 
-def chord_jazzification_inference(hp, threshold=0.6):
+def _generate_midi_from_voicings(voicings, roots, durations, valid_len, output_dir, qpm=120):
+    """voicings = [time_steps, 88]
+            duartions = [time_steps]
+            valid_len = int
+            qpm = quarter notes per minutes """
+
+    # Create a PrettyMIDI object
+    midi = pm.PrettyMIDI()
+    # Create an Instrument instance
+    program = pm.instrument_name_to_program('Bright Acoustic Piano')
+    instrument = pm.Instrument(program=program)
+    onset = 0
+
+    # Iterate over voicings
+    for root, voicing, duration in zip(roots[:valid_len], voicings[:valid_len], durations[:valid_len]):
+        new_duration = duration * (60 / qpm)
+        if root != 'None':
+            note_numbers = [i + 21 for i, x in enumerate(voicing) if x == 1]
+            for number in note_numbers:
+                # Create a Note instance, starting at 0s and ending at .5s
+                note = pm.Note(velocity=100, pitch=number, start=onset, end=onset + new_duration)
+                # Add it to the instrument
+                instrument.notes.append(note)
+        onset += new_duration
+
+    # Add the instrument to the PrettyMIDI object
+    midi.instruments.append(instrument)
+    # Write out the MIDI data
+    midi.write(output_dir)
+
+def chord_jazzification_inference(hp, threshold=0.6, user_input=False):
     '''Generate jazzified chord sequences from the JAAH dataset using the chord jazzification model trained on the chord jazzificaion dataset.
         threshold used for binarizing the voicing probabilities'''
 
-    print("Load inference data...")
-    data_dir = 'JAAH_data.pickle' # the JAAH dataset
+    def _get_user_input():
+        valid_syntax = ['C', 'D', 'E', 'F', 'G', 'A', 'B', '#', 'b', ':', 'M', 'm', 'a', 'd', ' ']
+        valid_roots = [r + a for a in ['', '#', 'b'] for r in valid_syntax[:7]]
+        valid_qualities = valid_syntax[10:14]
 
-    with open(data_dir, 'rb') as file:
-        data = pickle.load(file) # [('root', object), ('triad_type', object), ('color', object), ('bass', object), ('root_id', np.int32), ('triad_type_id', np.int32), ('bass_id', np.int32), ('duration', np.float32)]
+        def _transform_input(user_input): # transform the input to the required format
+            note_name_dict = {'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11}
+            accidental_dict = {'': 0, '#': 1, 'b': -1}
+            note_name_conversion_dict = {rk + ak: (rv + av) % 12 for rk, rv in note_name_dict.items() for ak, av in accidental_dict.items()}
+            triad_type2int_dict = {'M': 0, 'm': 1, 'a': 2, 'd': 3}
+            structured_input = [x.split(':') for x in user_input.split(' ')]
+            structured_input = [(note_name_conversion_dict[x[0]], triad_type2int_dict[x[1]], 1.0) for x in structured_input]
+            return np.array(structured_input, dtype=[('root_id', np.int32), ('triad_type_id', np.int32), ('duration', np.float32)])[np.newaxis, :]
 
-    Y_len = _get_valid_length(data['duration'])
-    print('JAAH data.shape =', data.shape)
-    # print('data.dtype =', data.dtype)
-    # print('Y_len.shape =', Y_len.shape)
-    n_steps = data.shape[1]
+        print('Please enter a sequence of triads to jazzify.')
+        print('Valid syntax: roots = {C, D, E, F, G, A, B}, accidentals = {#, b}, qualities = {M, m, a, d}')
+        print('Example: \'C:m F:m G:M Ab:M\'')
+
+        # Get user input
+        while(True):
+            user_input = input("Enter your sequence of triads: ")
+            # Check input validity
+            user_input_roots = [s.split(':')[0] for s in user_input.split(' ')]
+            user_input_qualities = [s.split(':')[1] for s in user_input.split(' ')]
+            if any(s not in valid_syntax for s in user_input):
+                print('Invalid syntax')
+                print([s not in valid_syntax for s in user_input])
+            if any([s not in valid_roots for s in user_input_roots]):
+                print('Invalid root.')
+            if any([s not in valid_qualities for s in user_input_qualities]):
+                print('Invalid quality.')
+            else:
+                break
+        # Transform input to the required format
+        structured_input = _transform_input(user_input)
+        return structured_input
+
+
+    if not user_input:
+        print("Load inference data...")
+        data_dir = 'JAAH_data.pickle' # the JAAH dataset
+
+        with open(data_dir, 'rb') as file:
+            data = pickle.load(file) # [('root', object), ('triad_type', object), ('color', object), ('bass', object), ('root_id', np.int32), ('triad_type_id', np.int32), ('bass_id', np.int32), ('duration', np.float32)]
+
+        Y_len = _get_valid_length(data['duration'])
+        print('JAAH data.shape =', data.shape)
+        # print('data.dtype =', data.dtype)
+        # print('Y_len.shape =', Y_len.shape)
+        n_steps = data.shape[1]
+    else:
+        data = _get_user_input()
+        n_steps = data.shape[1]
+        Y_len = [n_steps]
+
 
     with tf.Graph().as_default() as g_coloring:
         with tf.name_scope('Chord_jazzification_coloring'):
@@ -1461,108 +1536,94 @@ def chord_jazzification_inference(hp, threshold=0.6):
 
             p_v, v_mask = voicing_sess.run([pred_v, pianoroll_mask_float], feed_dict=voicing_feed_fict)
 
-    # Get the chord labels of JAAH sequences
-    def _get_chord_sequences(data, Y_len):
-        def get_chord_string(label):
-            if label['root'] != 'None':
-                string = label['root'] + ':' + label['triad_type']
-                if label['color'] != 'None':
-                    string += label['color']
-            else:
-                string = 'None'
-            if label['root'] != label['bass']:
-                string += ('/' + label['bass'])
 
-            string += ('-' + str(label['duration']))
-            return string
+    if not user_input:
+        # Get the chord labels of JAAH sequences
+        def _get_chord_sequences(data, Y_len):
+            def get_chord_string(label):
+                if label['root'] != 'None':
+                    string = label['root'] + ':' + label['triad_type']
+                    if label['color'] != 'None':
+                        string += label['color']
+                else:
+                    string = 'None'
+                if label['root'] != label['bass']:
+                    string += ('/' + label['bass'])
 
-        chord_sequences = []
-        for i, sequence in enumerate(data):
-            chord_sequences.append([get_chord_string(l) for l in sequence[:Y_len[i]]])
-        return chord_sequences
+                string += ('-' + str(label['duration']))
+                return string
 
-    JAAH_sequences = _get_chord_sequences(data, Y_len)
-    # print(JAAH_sequences)
+            chord_sequences = []
+            for i, sequence in enumerate(data):
+                chord_sequences.append([get_chord_string(l) for l in sequence[:Y_len[i]]])
+            return chord_sequences
 
-    # Compare generated voicings with input chord symbols
-    def _get_colorings(data, voicing_sequences, Y_len):
-        coloring_dict = {0: '1', 1: 'b2', 2: '2', 3: 'b3', 4: '3', 5: '4', 6: '#4', 7: '5', 8: 'b6', 9: '6', 10: 'm7', 11: 'M7'}
-        def compare_chroma(label, v):
-            if label['root'] != 'None':
-                label_chroma = np.roll(triad_id_to_chroma[label['triad_type_id']], shift=label['root_id'])
-                v_note_numbers = [i+21 for i, x in enumerate(v) if x==1]
-                v_chroma = np.array([1 if i in [number % 12 for number in v_note_numbers] else 0 for i in range(12)])
-                chroma_diff = v_chroma - label_chroma
-                if not all(x==0  for x in chroma_diff):
-                    chroma_diff_shift = np.roll(chroma_diff, shift=-label['root_id'])
-                    color = [coloring_dict[i] if x > 0 else 'o' + coloring_dict[i] for i, x in enumerate(chroma_diff_shift) if x != 0]
-                    color = '(' + ','.join(color) + ')'
+        JAAH_sequences = _get_chord_sequences(data, Y_len)
+        # print(JAAH_sequences)
+
+        # Compare generated voicings with input chord symbols
+        def _get_colorings(data, voicing_sequences, Y_len):
+            coloring_dict = {0: '1', 1: 'b2', 2: '2', 3: 'b3', 4: '3', 5: '4', 6: '#4', 7: '5', 8: 'b6', 9: '6', 10: 'm7', 11: 'M7'}
+            def compare_chroma(label, v):
+                if label['root'] != 'None':
+                    label_chroma = np.roll(triad_id_to_chroma[label['triad_type_id']], shift=label['root_id'])
+                    v_note_numbers = [i+21 for i, x in enumerate(v) if x==1]
+                    v_chroma = np.array([1 if i in [number % 12 for number in v_note_numbers] else 0 for i in range(12)])
+                    chroma_diff = v_chroma - label_chroma
+                    if not all(x==0  for x in chroma_diff):
+                        chroma_diff_shift = np.roll(chroma_diff, shift=-label['root_id'])
+                        color = [coloring_dict[i] if x > 0 else 'o' + coloring_dict[i] for i, x in enumerate(chroma_diff_shift) if x != 0]
+                        color = '(' + ','.join(color) + ')'
+                    else:
+                        color = 'None'
+
+                    if sum(v) > 0:
+                        v_bass_id = (np.where(v == 1)[0][0] + 21) % 12
+                        if v_bass_id != label['root_id']:
+                            v_bass = (v_bass_id - label['root_id']) % 12
+                            v_bass = coloring_dict[v_bass]
+                            color += ('/' + v_bass)
+
                 else:
                     color = 'None'
 
-                if sum(v) > 0:
-                    v_bass_id = (np.where(v == 1)[0][0] + 21) % 12
-                    if v_bass_id != label['root_id']:
-                        v_bass = (v_bass_id - label['root_id']) % 12
-                        v_bass = coloring_dict[v_bass]
-                        color += ('/' + v_bass)
+                return color
 
-            else:
-                color = 'None'
+            output_colorings = []
+            for i, (labels, v_seq) in enumerate(zip(data, voicing_sequences)):
+                output_colorings.append([compare_chroma(l, v) for l, v in zip(labels[:Y_len[i]], v_seq[:Y_len[i]])])
+            return output_colorings
 
-            return color
+        model_colorings = _get_colorings(data, p_v, Y_len)
 
-        output_colorings = []
-        for i, (labels, v_seq) in enumerate(zip(data, voicing_sequences)):
-            output_colorings.append([compare_chroma(l, v) for l, v in zip(labels[:Y_len[i]], v_seq[:Y_len[i]])])
-        return output_colorings
+        # Generate midi example
+        print('Generate midi...')
+        generated_labels = []
+        output_folder = 'inference\\'
+        if not os.path.isdir(output_folder):
+            os.mkdir(output_folder)
+        for sample_id in range(p_v.shape[0]):
+            output_info = [l + ', ' + c for l, c in zip(JAAH_sequences[sample_id], model_colorings[sample_id])]
+            # print(str(sample_id+1) + ':', output_info)
+            generated_labels.append(str(sample_id+1) + ':' + str(output_info) + '\n')
+            output_dir = output_folder + str(sample_id+1) + '.mid'
+            _generate_midi_from_voicings(p_v[sample_id], data['root_id'][sample_id], data['duration'][sample_id], Y_len[sample_id], output_dir=output_dir)
 
-    model_colorings = _get_colorings(data, p_v, Y_len)
-
-    def _generate_midi_from_voicings(voicings, roots, durations, valid_len, output_dir, qpm=120):
-        """voicings = [time_steps, 88]
-                duartions = [time_steps]
-                valid_len = int
-                qpm = quarter notes per minutes """
-
-        # Create a PrettyMIDI object
-        midi = pm.PrettyMIDI()
-        # Create an Instrument instance
-        program = pm.instrument_name_to_program('Bright Acoustic Piano')
-        instrument = pm.Instrument(program=program)
-        onset = 0
-
-        # Iterate over voicings
-        for root, voicing, duration in zip(roots[:valid_len], voicings[:valid_len], durations[:valid_len]):
-            new_duration = duration * (60 / qpm)
-            if root != 'None':
-                note_numbers = [i + 21 for i, x in enumerate(voicing) if x == 1]
-                for number in note_numbers:
-                    # Create a Note instance, starting at 0s and ending at .5s
-                    note = pm.Note(velocity=100, pitch=number, start=onset, end=onset + new_duration)
-                    # Add it to the instrument
-                    instrument.notes.append(note)
-            onset += new_duration
-
-        # Add the instrument to the PrettyMIDI object
-        midi.instruments.append(instrument)
-        # Write out the MIDI data
-        midi.write(output_dir)
+        with open(output_folder + "chord_sequences.txt", "w") as file:
+            file.writelines(generated_labels)
 
 
-    # Generate midi example
-    print('Generate midi...')
-    generated_labels = []
-    for sample_id in range(p_v.shape[0]):
-        output_info = [l + ', ' + c for l, c in zip(JAAH_sequences[sample_id], model_colorings[sample_id])]
-        # print(str(sample_id+1) + ':', output_info)
-        generated_labels.append(str(sample_id+1) + ':' + str(output_info) + '\n')
-        output_dir = 'inference\\' + str(sample_id+1) + '.mid'
-        _generate_midi_from_voicings(p_v[sample_id], data['root_id'][sample_id], data['duration'][sample_id], Y_len[sample_id], output_dir=output_dir)
+    else:
+        output_folder = 'user_inference\\'
+        if not os.path.isdir(output_folder):
+            os.mkdir(output_folder)
+        for sample_id in range(p_v.shape[0]):
+            output_dir = output_folder + str(sample_id+1) + '.mid'
+            _generate_midi_from_voicings(p_v[sample_id], data['root_id'][sample_id], data['duration'][sample_id], Y_len[sample_id], output_dir=output_dir, qpm=60)
 
-    with open("inference\\chord_sequences.txt", "w") as file:
-        file.writelines(generated_labels)
-    print('Generation completed.')
+    print('Chord jazzification completed.')
+
+
 
 
 
