@@ -7,7 +7,7 @@ A dataset featuring the interpretations of the chord symbols in terms of colorin
 * pretty_midi 0.2.9 <br />
 
 
-## Descrpitions
+## Descriptions
 * `Chord_Jazzification_Dataset`: the annotations
 * `chord_jazzification_preprocessing.py`: preprocess the chord jazzification dataset and get the preprocessed data `chord_jazzification_training_data.pickle`
    
