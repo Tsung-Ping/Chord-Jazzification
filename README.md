@@ -18,5 +18,5 @@ A dataset for chord coloring and voicing.
 
 3. Run `Chord_Jazzification.py` either to train the models or to inference chord sequences using the pre-trained models
 
-   The pre-trained models are saved in the directories: coloring_model, voicing_model
-   The jazzifications of the JAAH dataset are saved in the directory: JAAH_inference
+   The pre-trained models are saved in the directories: `coloring_model`, `voicing_model` <br />
+   The jazzifications of the JAAH dataset are saved in the directory: `JAAH_inference`
