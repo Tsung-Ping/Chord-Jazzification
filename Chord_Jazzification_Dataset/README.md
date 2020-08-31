@@ -1,7 +1,7 @@
-##onset
+## Onset
 The onset(measured in beats) of each chord.
 
-##Chord Symbol
+## Chord Symbol
 (R = root, C = Color, B = Bass)<br />
 R:M, R:M6, R:Madd2, R:Madd9, R:M7, <br />
 R:m, R:m6, R:madd9, R:m7, <br />
@@ -15,7 +15,7 @@ R:C(9/b9/#9/+9/-9/+11/#11), <br />
 R:C/B,<br />
 None<br />
 
-##Coloring
+## Coloring
 Coloring indicates the chord degrees which appear in the voicing but are notspecified by the chord symbol, and vice versa, e.g.,(o1,9) indicates that the root is omitted and the 9th is added.<br />
 <br />
 Vocabulary:<br />
@@ -31,7 +31,7 @@ Vocabulary:<br />
 13: 13 (defaut = M13), #13, b13<br />
 None<br />
 
-##Voicing
+## Voicing
 Voicing represents the configuration of eachchord with a set of scientific pitch notations, e.g., (Db2,Db3,F4,Ab4,Eb5).
 <br />
 Vocabulary:<br />
@@ -39,11 +39,11 @@ N = note name, R = register, accidental = {#,b,x,d} where x = double sharp, d = 
 N{#,b,x,d}R<br />
 None<br />
 
-##Tonality
+## Tonality
 R(#/b):M or R(#/b):m<br />
 e.g., C:M = C major, c#:m = C# minor<br />
 
-##Roman Numeral
+## Roman Numeral
 Roman Numeral denotes the scale degree on which a chord is built, as well as the quality and the inversion information, e.g., V7stands for a dominant seventh chord in root position.
 <br />
 Vocabulary:<br />
@@ -75,13 +75,13 @@ for compound chord<br />
 * = inside<br />
 ] = end<br />
 
-##Scale Degree
+## Scale Degree
 For normal chords, the 1st (primary) degree = 1; for altered chords (represented as 2nd degree/1st degree), the 1st (primary) degree != 1<br />
 '#' before number = sharp<br />
 'b' before number = flat<br />
 None<br />
 
-##Chord Quality
+## Chord Quality
 M = major<br />
 m = minor<br />
 M7 = major 7th<br />
@@ -97,7 +97,7 @@ a = agumented triad<br />
 a6 = agumented 6th (+4: It+6, Fr+6, Gr+6)<br />
 None<br />
 
-##Inversion
+## Inversion
 0 = original<br />
 1 = 1st<br />
 2 = 2st<br />
