@@ -1599,7 +1599,7 @@ def chord_jazzification_inference(hp, threshold=0.6, user_input=False):
         # Generate midi example
         print('Generate midi...')
         generated_labels = []
-        output_folder = 'inference\\'
+        output_folder = 'JAAH_inference\\'
         if not os.path.isdir(output_folder):
             os.mkdir(output_folder)
         for sample_id in range(p_v.shape[0]):
