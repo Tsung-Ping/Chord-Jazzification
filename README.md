@@ -2,9 +2,9 @@
 A dataset for chord coloring and voicing.
 
 ## Requirements
-   tensorflow-gpu 1.8.0
-   numpy 1.16.2
-   pretty_midi 0.2.9
+   tensorflow-gpu 1.8.0 <br />
+   numpy 1.16.2 <br />
+   pretty_midi 0.2.9 <br />
 
 
 ## Descrpitions
