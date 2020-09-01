@@ -1527,7 +1527,7 @@ def chord_jazzification_inference(hp, threshold=0.6, user_input=False, random_sa
                 bernoulli_sample = lambda prob: tf.ceil(prob - tf.random_uniform(tf.shape(prob)))
                 v_probs = tf.where(tf.sigmoid(v_logits) < 0.5, tf.zeros_like(v_logits), v_logits) * pianoroll_mask_float
                 v_probs = tf.where(v_probs < 0.6, bernoulli_sample(v_probs), v_probs)
-                pred_v = tf.ceil(v_probs - tf.random_uniform(tf.shape(v_probs)))
+                pred_v = tf.cast(tf.ceil(v_probs - tf.random_uniform(tf.shape(v_probs))), tf.int32)
 
         with tf.Session(graph=g_voicing) as voicing_sess:
             voicing_saver = tf.train.Saver(max_to_keep=1)
