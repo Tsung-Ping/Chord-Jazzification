@@ -1520,7 +1520,6 @@ def chord_jazzification_inference(hp, threshold=0.6, user_input=False, random_sa
                 print('Invalid model name.')
                 exit(1)
 
-
             if not random_sample:
                 v_probs = (tf.sigmoid(v_logits) + (0.5 - threshold)) * pianoroll_mask_float
                 pred_v = tf.cast(tf.round(v_probs), tf.int32)
