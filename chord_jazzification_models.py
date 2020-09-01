@@ -1409,7 +1409,9 @@ def _generate_midi_from_voicings(voicings, roots, durations, valid_len, output_d
 
 def chord_jazzification_inference(hp, threshold=0.6, user_input=False, random_sample=False):
     '''Generate jazzified chord sequences from the JAAH dataset using the chord jazzification model trained on the chord jazzificaion dataset.
-        threshold used for binarizing the voicing probabilities'''
+        threshold used for binarizing the voicing probabilities.
+        user_input=False, infer chords from the JAAH dataset, otherwise from user input.
+        random_sample=False, binarize voicing probabilities using threshold, otherwise using Bernoulli sampling.'''
 
     def _get_user_input():
         valid_syntax = ['C', 'D', 'E', 'F', 'G', 'A', 'B', '#', 'b', ':', 'M', 'm', 'a', 'd', ' ']
@@ -1478,14 +1480,7 @@ def chord_jazzification_inference(hp, threshold=0.6, user_input=False, random_sa
             dropout = tf.placeholder(dtype=tf.float32, name="dropout_rate")
             is_training = tf.placeholder(dtype=tf.bool, name='is_training')
 
-            if hp.sequential_model == 'blstm':
-                b_logits, p_logits = BLSTM_coloring(x_r, x_tr, x_d, y_len, dropout, hp)
-            elif hp.sequential_model == 'mhsa':
-                b_logits, p_logits = Attention_coloring(x_r, x_tr, x_d, y_len, dropout, is_training, hp)
-            else:
-                print('Invalid model name.')
-                exit(1)
-
+            b_logits, p_logits = Attention_coloring(x_r, x_tr, x_d, y_len, dropout, is_training, hp)
             pred_b = tf.argmax(b_logits, axis=2, output_type=tf.int32)
             pred_p = tf.cast(tf.round(tf.sigmoid(p_logits)), tf.int32)
 
@@ -1512,18 +1507,13 @@ def chord_jazzification_inference(hp, threshold=0.6, user_input=False, random_sa
             dropout = tf.placeholder(dtype=tf.float32, name="dropout_rate")
             is_training = tf.placeholder(dtype=tf.bool, name="is_training")
 
-            if hp.sequential_model == 'blstm':
-                v_logits, b_logits, p_logits, pianoroll_mask_float = BLSTM_voicing(x_b, x_p, x_d, y_len, dropout, hp)
-            elif hp.sequential_model == 'mhsa':
-                v_logits, b_logits, p_logits, pianoroll_mask_float = Attention_voicing(x_b, x_p, x_d, y_len, dropout, is_training, hp)
-            else:
-                print('Invalid model name.')
-                exit(1)
-
+            v_logits, b_logits, p_logits, pianoroll_mask_float = Attention_voicing(x_b, x_p, x_d, y_len, dropout, is_training, hp)
             if not random_sample:
+                # Binarization using threshold
                 v_probs = (tf.sigmoid(v_logits) + (0.5 - threshold)) * pianoroll_mask_float
                 pred_v = tf.cast(tf.round(v_probs), tf.int32)
             else:
+                # Binarization using Bernoulli sampling
                 bernoulli_sample = lambda prob: tf.ceil(prob - tf.random_uniform(tf.shape(prob)))
                 v_probs = tf.where(tf.sigmoid(v_logits) < 0.5, tf.zeros_like(v_logits), v_logits) * pianoroll_mask_float
                 v_probs = tf.where(v_probs < 0.6, bernoulli_sample(v_probs), v_probs)
