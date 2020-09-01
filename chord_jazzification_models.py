@@ -1407,7 +1407,7 @@ def _generate_midi_from_voicings(voicings, roots, durations, valid_len, output_d
     # Write out the MIDI data
     midi.write(output_dir)
 
-def chord_jazzification_inference(hp, threshold=0.6, user_input=False):
+def chord_jazzification_inference(hp, threshold=0.6, user_input=False, random_sample=False):
     '''Generate jazzified chord sequences from the JAAH dataset using the chord jazzification model trained on the chord jazzificaion dataset.
         threshold used for binarizing the voicing probabilities'''
 
@@ -1427,7 +1427,7 @@ def chord_jazzification_inference(hp, threshold=0.6, user_input=False):
 
         print('Please enter a sequence of triads to jazzify.')
         print('Valid syntax: roots = {C, D, E, F, G, A, B}, accidentals = {#, b}, qualities = {M, m, a, d}')
-        print('Example: \'C:m F:m G:M Ab:M\'')
+        print('Input example: C:M D:m G:M A:m E:m F:M D:m G:M Ab:M Bb:M C:M')
 
         # Get user input
         while(True):
@@ -1519,8 +1519,12 @@ def chord_jazzification_inference(hp, threshold=0.6, user_input=False):
             else:
                 print('Invalid model name.')
                 exit(1)
-            pred_v = tf.round(tf.sigmoid(v_logits) + (0.5-threshold)) * pianoroll_mask_float
-            pred_v = tf.cast(pred_v, tf.int32)
+
+            v_probs = (tf.sigmoid(v_logits) + (0.5 - threshold)) * pianoroll_mask_float
+            if not random_sample:
+                pred_v = tf.cast(tf.round(v_probs), tf.int32)
+            else:
+                pred_v = tf.ceil(v_probs - tf.random_uniform(tf.shape(v_probs)))
 
         with tf.Session(graph=g_voicing) as voicing_sess:
             voicing_saver = tf.train.Saver(max_to_keep=1)
