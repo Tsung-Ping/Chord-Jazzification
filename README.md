@@ -1,7 +1,7 @@
 # Chord-Jazzification
 A dataset featuring the interpretations of chord symbols in terms of coloring and voicing.
 
-[(Chord Jazzification: Learning Jazz Interpretations of Chord Symbols)]https://program.ismir2020.net/static/final_papers/90.pdf
+[Chord Jazzification: Learning Jazz Interpretations of Chord Symbols]https://program.ismir2020.net/static/final_papers/90.pdf
 
 ## Requirements
 * tensorflow-gpu 1.8.0 <br />
