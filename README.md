@@ -1,5 +1,5 @@
 # Chord-Jazzification
-A deep learning approach to the chord coloring and chord voicing. A dataset featuring the interpretations of chord symbols is also propossed.
+A deep learning approach to the chord coloring and the chord voicing. A dataset featuring the interpretations of chord symbols is also propossed.
 
 See the paper for more information: [Chord Jazzification: Learning Jazz Interpretations of Chord Symbols (ISMIR 2020)](https://program.ismir2020.net/static/final_papers/90.pdf)
 
