@@ -13,7 +13,7 @@ def main():
     # cross_validate_end2end_chord_jazzification(data_dir, hp) # train the end-to-end chord jazzification model with cross-validation sets
     # train_chord_jazzification(data_dir, hp) # train the chord jazzification model with the whole dataset
 
-    chord_jazzification_inference(hp, threshold=0.6, user_input=True, random_sample=True) # generate jazzified chord sequences from the JAAH dataset using the chord jazzification model trained on the chord jazzificaion dataset
+    chord_jazzification_inference(hp, threshold=0.6, user_input=True, random_sample=False) # generate jazzified chord sequences from the JAAH dataset using the chord jazzification model trained on the chord jazzificaion dataset
 
 if __name__ == '__main__':
 
